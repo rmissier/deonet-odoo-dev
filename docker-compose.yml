@@ -1,0 +1,36 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  odoo:
+    image: odoo:18
+    depends_on:
+      - db
+    ports:
+      - "${ODOO_PORT}:8069"
+    environment:
+      HOST: db
+      USER: ${POSTGRES_USER}
+      PASSWORD: ${POSTGRES_PASSWORD}
+      ODOO_ADDONS_PATH: /mnt/enterprise:/mnt/addons-test:/mnt/addons-mybranch:/usr/lib/python3/dist-packages/odoo/addons
+    volumes:
+      - ${ODOO_ENTERPRISE_PATH}:/mnt/enterprise
+      - ${ADDONS_TEST_PATH}:/mnt/addons-test
+      - ${ADDONS_MY_PATH}:/mnt/addons-mybranch
+      - ${ODOO_DATA_PATH}:/var/lib/odoo
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
+    ports:
+      - "8080:80"

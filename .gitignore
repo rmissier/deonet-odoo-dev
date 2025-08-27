@@ -1,0 +1,49 @@
+# Byte-compiled / cache files
+__pycache__/
+*.py[cod]
+
+# Odoo data and filestore
+odoo-data/
+odoo-data/**
+data/
+data/**
+
+# Database dumps and backups
+db-dumps/
+db-dumps/**
+db-backups/
+db-backups/**
+
+# Environment and config
+.env
+*.env
+config/odoo.conf
+
+odoo-enterprise/
+
+# Ignore all files in these addon folders, but keep the folders themselves
+odoo-enterprise/*
+addons-test/*
+addons-mybranch/*
+
+# Docker
+*.pid
+*.log
+
+# VSCode
+.vscode/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Python virtual environments
+venv/
+.env/
+
+# Misc
+*.swp
+*.swo
+
+# Ignore clone_addons.sh output (if any)
+clone_addons.log
