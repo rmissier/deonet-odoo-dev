@@ -1,14 +1,18 @@
 services:
   db:
+    container_name: odoo-db
     image: postgres:16
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${ODOO_DB_PORT}:5432"
     volumes:
       - ${ODOO_DB_PATH}:/var/lib/postgresql/data
 
   odoo:
+    container_name: odoo-app
     image: odoo:18
     depends_on:
       - db
@@ -25,11 +29,3 @@ services:
       - ${ADDONS_MY_PATH}:/mnt/addons-mybranch
       - ${ODOO_FILESTORE_PATH}:/var/lib/odoo
       - ${ODOO_CONFIG_PATH}:/etc/odoo/odoo.conf
-
-  # pgadmin:
-  #   image: dpage/pgadmin4:latest
-  #   environment:
-  #     - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
-  #     - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
-  #   ports:
-  #     - "8080:80"

@@ -21,10 +21,6 @@ This project provides a Docker-based Odoo development environment that closely m
 - `backup/` - Directory to store the backup from odoo.sh
 - `.env` — Centralized environment variables
 
-
-
-
-
 ### Prerequisites
 
 - Docker
@@ -85,11 +81,11 @@ This project provides a Docker-based Odoo development environment that closely m
 
 Odoo.sh does not provide SSH access. To get a database backup:
 
-1. Go to your Odoo.sh project in the web interface.
-2. Navigate to the **Backups** section.
-3. Download the latest backup (usually a `.dump` file).
-4. Place the downloaded file at the path specified by `DB_DUMP_FILE` in your `.env` (e.g., `./db-dumps/sanitized.dump`).
-5. Run `make reset-db` to restore the database in your local environment.
+- Go to your Odoo.sh project in the web interface.
+- Navigate to the **Backups** section.
+- Download the latest backup (usually a `.zip` file) and unpack it.
+- Place the downloaded data at the path specified by `ODOO_DB_PATH` in your `.env`.
+- Run `make reset-db` to restore the database in your local environment.
 
 The Makefile will automatically restore the database from this dump if the local database is empty when you run `make start`.
 
@@ -114,4 +110,3 @@ The Makefile will automatically restore the database from this dump if the local
 ## License
 
 This project is for internal development use. Odoo Enterprise and custom modules are subject to their respective licenses.
-
