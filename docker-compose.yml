@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   db:
     image: postgres:16
@@ -8,7 +6,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - ${ODOO_DB_PATH}:/var/lib/postgresql/data
 
   odoo:
     image: odoo:18
@@ -25,12 +23,13 @@ services:
       - ${ODOO_ENTERPRISE_PATH}:/mnt/enterprise
       - ${ADDONS_TEST_PATH}:/mnt/addons-test
       - ${ADDONS_MY_PATH}:/mnt/addons-mybranch
-      - ${ODOO_DATA_PATH}:/var/lib/odoo
+      - ${ODOO_FILESTORE_PATH}:/var/lib/odoo
+      - ${ODOO_CONFIG_PATH}:/etc/odoo/odoo.conf
 
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
-      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
-    ports:
-      - "8080:80"
+  # pgadmin:
+  #   image: dpage/pgadmin4:latest
+  #   environment:
+  #     - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+  #     - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
+  #   ports:
+  #     - "8080:80"

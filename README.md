@@ -14,9 +14,11 @@ This project provides a Docker-based Odoo development environment that closely m
 ## Folder Structure
 
 - `docker-compose.yml` — Main orchestration file for services
-- `config/odoo.conf` — Odoo configuration (can be overridden)
+- `odoo.conf` — Odoo configuration (can be overridden)
 - `addons-*/`, `odoo-enterprise/` — Custom and enterprise addons
 - `filestore/` — Persistent Odoo filestore
+- `config/` - Odoo config files
+- `backup/` - Directory to store the backup from odoo.sh
 - `.env` — Centralized environment variables
 
 
@@ -45,8 +47,8 @@ This project provides a Docker-based Odoo development environment that closely m
 
    - Go to your Odoo.sh project in the web interface.
    - Navigate to the **Backups** section.
-   - Download the latest backup (usually a `.dump` file).
-   - Place the downloaded file at the path specified by `DB_DUMP_FILE` in your `.env` (e.g., `./db-dumps/sanitized.dump`).
+   - Download the latest backup (usually a `.zip` file) and unpack it.
+   - Place the downloaded data at the path specified by `ODOO_DB_PATH` in your `.env`.
 
 5. **Start the environment and manage code/database:**
 

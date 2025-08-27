@@ -11,6 +11,9 @@ else
     exit 1
 fi
 
+echo "Creating required directories..."
+mkdir -p "$ODOO_DB_PATH" "$ODOO_BACKUP_PATH"
+
 echo "Cloning Odoo Enterprise..."
 git clone -b "$ENTERPRISE_BRANCH" "$GIT_ENTERPRISE_REPO" "$ODOO_ENTERPRISE_PATH"
 
