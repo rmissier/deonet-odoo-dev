@@ -13,7 +13,9 @@ services:
 
   odoo:
     container_name: odoo-app
-    image: odoo:18
+    build:
+      context: .
+      dockerfile: Dockerfile
     depends_on:
       - db
     ports:
