@@ -1,6 +1,6 @@
 # Odoo Development Environment (Odoo.sh-like)
 
-This project provides a Docker-based Odoo development environment that closely mimics the workflow and structure of odoo.sh. It is designed for teams to collaborate efficiently, with support for Odoo Community, Enterprise, and custom addons.
+This project provides a Docker-based Odoo development environment that closely mimics the workflow and structure of odoo.sh. It is designed for teams to collaborate efficiently, with support for Odoo Community, Enterprise, and custom addons. All code and environment management is handled via a single Makefile for easy onboarding and updates.
 
 ## Features
 
@@ -9,16 +9,15 @@ This project provides a Docker-based Odoo development environment that closely m
 - **Branch and path management** via a centralized `.env` file
 - **Persistent data and filestore** for live development
 - **Easy configuration** for database, Odoo, and addons
-- **Optional tools** like pgAdmin for database management
+- **All code and repo management via Makefile** (no separate scripts)
 
 ## Folder Structure
 
 - `docker-compose.yml` — Main orchestration file for services
-- `odoo.conf` — Odoo configuration (can be overridden)
-- `addons-*/`, `odoo-enterprise/` — Custom and enterprise addons
+- `odoo.conf` — Odoo configuration (used directly, not in config/)
+- `addons-main/`, `addons-test/`, `addons-my/`, `odoo-enterprise/` — Custom and enterprise addons
 - `filestore/` — Persistent Odoo filestore
-- `config/` - Odoo config files
-- `backup/` - Directory to store the backup from odoo.sh
+- `backup/` — Directory to store the backup from odoo.sh
 - `.env` — Centralized environment variables
 
 ### Prerequisites
@@ -26,37 +25,32 @@ This project provides a Docker-based Odoo development environment that closely m
 - Docker
 - Docker Compose
 - SSH key with access to private repositories (added to your ssh-agent)
+- Visual studio code with extensions: Container Tools, PostgreSQL, Python
 
 ### Setup
 
 1. **Clone this repository**
-2. **Clone all required addons repositories and branches:**
+2. **Edit `.env`** as needed for your branches, paths, and credentials
 
-   ```sh
-   bash clone_addons.sh
-   ```
-
-   This script reads repository URLs and branch names from your `.env` file and clones them into the correct folders. Make sure your SSH agent is running and has access to the private repositories before running the script.
-
-3. **Copy and edit `.env`** as needed for your branches, paths, and credentials
-4. **Download and place the database backup from Odoo.sh:**
+   - You must update ADDONS_MY_BRANCH, set it to your name
+3. **Download and place the database and filestore backup from Odoo.sh:**
 
    - Go to your Odoo.sh project in the web interface.
    - Navigate to the **Backups** section.
    - Download the latest backup (usually a `.zip` file) and unpack it.
-   - Place the downloaded data at the path specified by `ODOO_DB_PATH` in your `.env`.
+   - Place the database dump (e.g., `dump.sql`) at the path specified by `DB_DUMP_FILE` in your `.env` (e.g., `./backup/dump.sql`).
+   - Place the filestore directory at the path specified by `ODOO_BACKUP_PATH` in your `.env` (e.g., `./backup/filestore`).
 
-5. **Start the environment and manage code/database:**
+4. **Start the environment and manage code/database:**
 
-   The Makefile automates most common tasks:
+   The Makefile automates all common tasks:
 
    ```sh
    make start
    ```
 
    This will:
-   - Pull the latest code for all addons (using git)
-   - Check out the correct branches as defined in `.env`
+   - Clone or update all required addons repositories and branches (using git, as defined in `.env`)
    - Start the Docker containers
    - Restore the database from a dump if the database is empty
 
@@ -66,26 +60,42 @@ This project provides a Docker-based Odoo development environment that closely m
    make reset-db
    ```
 
-   To update your code from remote repositories:
+   To reset code to remote repositories:
 
    ```sh
-   make pull-code
+   make reset-addons
    ```
+
+## Makefile targets
+
+Common commands you’ll use during development:
+
+- make start — Clone/update repos (reset-addons), start containers, restore DB if empty.
+- make reset-addons — Clone repositories if missing, or hard reset each repo to its remote branch as defined in `.env`.
+- make reset-db — Drop, create, and restore the database from `DB_DUMP_FILE`.
+- make filestore — Copy the filestore from `ODOO_BACKUP_PATH/filestore` into `./filestore` (mounted into the container at `/var/lib/odoo`).
+- make up — Start containers in the background.
+- make odoo-logs — Tail recent Odoo logs to troubleshoot.
+- make update-apps-list — Refresh the Apps registry (same as “Update Apps List” in UI).
+- make install-deonet-addons — Install the Deonet test modules (optional helper).
+- make update-web-modules — Update `web` and `website` modules to rebuild website assets.
 
 ### Access
 
 - Odoo: <http://localhost:8069>
-- pgAdmin: <http://localhost:8080> (default: <admin@example.com> / admin)
+- PostgreSQL: Use a VS Code extension (e.g., Microsoft PostgreSQL or SQLTools) to connect to `localhost:5432` with the credentials from your `.env` file.
 
-## Database: Getting a Backup from Odoo.sh
+## Database & Filestore: Getting a Backup from Odoo.sh
 
-Odoo.sh does not provide SSH access. To get a database backup:
+Odoo.sh does not provide SSH access. To get a database and filestore backup:
 
 - Go to your Odoo.sh project in the web interface.
 - Navigate to the **Backups** section.
 - Download the latest backup (usually a `.zip` file) and unpack it.
-- Place the downloaded data at the path specified by `ODOO_DB_PATH` in your `.env`.
+- Place the database dump (e.g., `dump.sql`) at the path specified by `DB_DUMP_FILE` in your `.env` (e.g., `./backup/dump.sql`).
+- Place the filestore directory at the path specified by `ODOO_BACKUP_PATH` in your `.env` (e.g., `./backup/filestore`).
 - Run `make reset-db` to restore the database in your local environment.
+- Run `make filestore` to restore the filestore in your local environment.
 
 The Makefile will automatically restore the database from this dump if the local database is empty when you run `make start`.
 
@@ -94,12 +104,12 @@ The Makefile will automatically restore the database from this dump if the local
 - SSH agent forwarding is enabled for secure access to private git repositories during build.
 - All configuration (database, Odoo, branches, paths) is managed via `.env`.
 - Addons and data are mounted as volumes for live development and persistence.
-- The Makefile automates code updates, branch management, container startup, and database restoration.
+- The Makefile automates all code updates, repository management, container startup, and database/filestore restoration.
 
 ## Customization
 
-- Add or change addon folders as needed (update `.env` and `docker-compose.yml` accordingly)
-- Adjust Odoo configuration in `config/odoo.conf`
+- Add or change addon folders as needed (update `.env`, `docker-compose.yml`, and `odoo.conf` accordingly)
+- Adjust Odoo configuration in `odoo.conf`
 - Use different branches for testing or feature development
 
 ## Troubleshooting

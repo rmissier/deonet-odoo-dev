@@ -1,7 +1,8 @@
 # Ignore files and folders
 odoo-enterprise/
+addons-main/
+addons-my/*
 addons-test/
-addons-mybranch/*
 filestore/
 db/
 backup/

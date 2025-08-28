@@ -22,10 +22,10 @@ services:
       HOST: db
       USER: ${POSTGRES_USER}
       PASSWORD: ${POSTGRES_PASSWORD}
-      ODOO_ADDONS_PATH: /mnt/enterprise:/mnt/addons-test:/mnt/addons-mybranch:/usr/lib/python3/dist-packages/odoo/addons
     volumes:
       - ${ODOO_ENTERPRISE_PATH}:/mnt/enterprise
+      - ${ADDONS_MAIN_PATH}:/mnt/addons-main
       - ${ADDONS_TEST_PATH}:/mnt/addons-test
-      - ${ADDONS_MY_PATH}:/mnt/addons-mybranch
+      - ${ADDONS_MY_PATH}:/mnt/addons-my
       - ${ODOO_FILESTORE_PATH}:/var/lib/odoo
       - ${ODOO_CONFIG_PATH}:/etc/odoo/odoo.conf
