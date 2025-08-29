@@ -1,7 +1,7 @@
 # Ignore files and folders
 odoo-enterprise/
 addons-main/
-addons-my/*
+addons-my/
 addons-test/
 filestore/
 db/

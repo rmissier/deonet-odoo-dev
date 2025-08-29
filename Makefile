@@ -14,7 +14,7 @@ export $(shell sed 's/=.*//' .env)
 .DEFAULT_GOAL := start
 
 
-start: reset-addons up maybe-restore-db
+start: reset-addons up maybe-restore-db install-deonet-addons
 
 
 # Clone or update all Odoo addon repositories
@@ -74,11 +74,10 @@ reset-addons:
 
 filestore:
 	@echo "🔀 Copy filestore"
-	rm -rf ./filestore
 	cp -r "${ODOO_BACKUP_PATH}/filestore" ./
 
 up:
-	docker compose up -d
+	docker compose up -d --build
 
 odoo-logs:
 	docker compose logs --no-color --tail=200 odoo
