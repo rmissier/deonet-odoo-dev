@@ -1,5 +1,5 @@
 
-.PHONY: filestore url start up reset-addons reset-db wait-for-db odoo-logs update-apps-list update-web-modules db-shell odoo-shell nuke rebuild-assets tidy
+.PHONY: filestore url start up reset-addons reset-db wait-for-db odoo-logs update-apps-list update-web-modules db-shell odoo-shell nuke rebuild-assets tidy smoke
 
 wait-for-db:
 	@echo "⌛ Waiting for database to be ready..."
@@ -114,11 +114,21 @@ reset-db: wait-for-db
 	@if [ ! -f "./backup/dump.sql" ]; then \
 		echo "❌ Database dump file ./backup/dump.sql not found!"; \
 		exit 1; \
-	fi
-	docker compose exec -T db dropdb -U $(DB_USER) $(DB_NAME) || true
-	docker compose exec -T db createdb -U $(DB_USER) $(DB_NAME)
-	cat ./backup/dump.sql | docker compose exec -T db psql -U $(DB_USER) -d $(DB_NAME)
-	docker compose exec odoo odoo -c /etc/odoo/odoo.conf -u all -d $(DB_NAME) --stop-after-init
+		fi
+	@echo "🛑 Stopping Odoo service to free DB connections..."
+	-@docker compose stop odoo || true
+	@echo "🔪 Terminating active connections to $(DB_NAME)..."
+	@docker compose exec -T db psql -U $(DB_USER) -d postgres -v ON_ERROR_STOP=1 -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='$(DB_NAME)' AND pid <> pg_backend_pid();" || true
+	@echo "🗑️ Dropping database $(DB_NAME)..."
+	-@docker compose exec -T db dropdb --force -U $(DB_USER) $(DB_NAME) || docker compose exec -T db dropdb -U $(DB_USER) $(DB_NAME) || true
+	@echo "🆕 Creating database $(DB_NAME)..."
+	@docker compose exec -T db createdb -U $(DB_USER) $(DB_NAME)
+	@echo "📥 Restoring ./backup/dump.sql into $(DB_NAME)..."
+	@cat ./backup/dump.sql | docker compose exec -T db psql -U $(DB_USER) -d $(DB_NAME)
+	@echo "🔧 Running Odoo upgrade in a one-off container..."
+	@docker compose run --rm --entrypoint /usr/bin/odoo odoo -c /etc/odoo/odoo.conf -d $(DB_NAME) -u all --stop-after-init
+	@echo "🚀 Starting Odoo service..."
+	@docker compose up -d odoo
 
 
 filestore:
@@ -162,3 +172,17 @@ rebuild-assets: wait-for-db
 	@echo "🔧 Rebuilding web and website modules (this may take a moment)..."
 	@docker compose exec odoo odoo -c /etc/odoo/odoo.conf -d $(DB_NAME) -u web,website --stop-after-init || true
 	@echo "✅ Asset rebuild complete. Hard-refresh your browser (Ctrl/Cmd+Shift+R)."
+
+# Quick HTTP smoke test to ensure Odoo is up and assets are served
+smoke:
+	@echo "🔎 Smoke test: /web/login and frontend assets"
+	@LOGIN_CODE=$$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8069/web/login); \
+	ASSETS_CODE=$$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8069/web/assets/debug/web.assets_frontend.css); \
+	echo "login: $$LOGIN_CODE"; \
+	echo "assets: $$ASSETS_CODE"; \
+	if [ "$$LOGIN_CODE" = "200" ] && [ "$$ASSETS_CODE" = "200" ]; then \
+		echo "✅ Smoke check passed"; \
+	else \
+		echo "❌ Smoke check failed"; \
+		exit 1; \
+	fi

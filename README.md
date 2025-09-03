@@ -51,10 +51,14 @@ A reproducible, Docker-based Odoo development setup modeled after odoo.sh. It su
       - `make start`
    - Access Odoo at <http://localhost:8069>
 
+   - Optional: quick smoke test
+      - `make smoke` (expects HTTP 200 for /web/login and frontend assets)
+
 1. Restore DB (optional on first run)
 
    - If you want to restore from `./backup/dump.sql`:
       - `make reset-db`
+      - This will: stop Odoo, terminate active DB sessions, drop/create the DB, restore the SQL dump, run a one-off Odoo upgrade (`-u all --stop-after-init`) via an overridden entrypoint, then restart Odoo.
 
 ## Make targets (summary)
 
@@ -62,11 +66,13 @@ A reproducible, Docker-based Odoo development setup modeled after odoo.sh. It su
 - up — Compose up in background (builds if needed).
 - reset-addons — Clone/update repos on host (enterprise, addons_main, addons_test, addons_my).
 - reset-db — Drop/create DB, restore from `backup/dump.sql`, and run `-u all` once.
+   - Internals: stops Odoo, terminates sessions, drops/creates DB, restores dump, runs a one-off upgrade with `/usr/bin/odoo ... --stop-after-init`, then restarts Odoo.
 - filestore — Copy `backup/filestore` into `./filestore`.
 - odoo-logs — Tail recent Odoo logs.
 - update-apps-list — Refresh Apps registry (equivalent to UI “Update Apps List”).
 - update-web-modules — Update web, website modules; quick asset refresh.
 - rebuild-assets — Clear ir_attachment/ir_asset via SQL and rebuild web/website.
+- smoke — Curl /web/login and frontend assets to assert HTTP 200; fails otherwise.
 - db-shell — psql shell in the db container.
 - odoo-shell — Odoo shell in the app container.
 - url — Print the local URL.
@@ -89,6 +95,8 @@ A reproducible, Docker-based Odoo development setup modeled after odoo.sh. It su
 - Update the Apps registry: `make update-apps-list`
 - Logs and shells:
    - `make odoo-logs`, `make db-shell`, `make odoo-shell`
+- Quick health check:
+   - `make smoke`
 
 ## Troubleshooting
 
