@@ -1,0 +1,39 @@
+{
+    // VS Code launch configurations for Odoo debugging
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Attach to Odoo (debugpy)",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+            "justMyCode": false,
+            "redirectOutput": true,
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "/opt/odoo"
+                },
+                {
+                    "localRoot": "${workspaceFolder}/enterprise",
+                    "remoteRoot": "/mnt/enterprise"
+                },
+                {
+                    "localRoot": "${workspaceFolder}/addons_main",
+                    "remoteRoot": "/mnt/addons_main"
+                },
+                {
+                    "localRoot": "${workspaceFolder}/addons_test",
+                    "remoteRoot": "/mnt/addons_test"
+                },
+                {
+                    "localRoot": "${workspaceFolder}/addons_my",
+                    "remoteRoot": "/mnt/addons_my"
+                }
+            ]
+        }
+    ]
+}
