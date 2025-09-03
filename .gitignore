@@ -1,8 +1,7 @@
 # Ignore files and folders
-odoo-enterprise/
-addons-main/
-addons-my/
-addons-test/
+enterprise/
+addons_main/
+addons_test/
 filestore/
 db/
 backup/
@@ -11,9 +10,11 @@ backup/
 *.pid
 *.log
 
-# VSCode
-.vscode/
-
 # System files
 .DS_Store
 Thumbs.db
+
+# Local env and IDE
+.env
+.vscode/
+.idea/

@@ -1,122 +1,108 @@
-# Odoo Development Environment (Odoo.sh-like)
+# Odoo Dev Environment (Docker, Odoo 18)
 
-This project provides a Docker-based Odoo development environment that closely mimics the workflow and structure of odoo.sh. It is designed for teams to collaborate efficiently, with support for Odoo Community, Enterprise, and custom addons. All code and environment management is handled via a single Makefile for easy onboarding and updates.
+A reproducible, Docker-based Odoo development setup modeled after odoo.sh. It supports Enterprise, shared addons, test addons, and a developer branch, all orchestrated with Docker Compose and a single Makefile.
 
-## Features
+## What’s inside
 
-- **Consistent local environment** for all developers using Docker and docker-compose
-- **Support for private repositories** (Odoo Enterprise, custom addons) via SSH agent forwarding
-- **Branch and path management** via a centralized `.env` file
-- **Persistent data and filestore** for live development
-- **Easy configuration** for database, Odoo, and addons
-- **All code and repo management via Makefile** (no separate scripts)
+- Dockerized services with healthchecks and restart policies.
+- Host-cloned repositories (via SSH) mounted into the container for live development.
+- Simple config via `.env` and `odoo.conf` (dev mode enabled: `dev = reload,all`).
+- Makefile-driven workflows for repo management, DB restore, asset rebuild, and troubleshooting.
 
-## Folder Structure
+## Directory layout
 
-- `docker-compose.yml` — Main orchestration file for services
-- `odoo.conf` — Odoo configuration (used directly, not in config/)
-- `addons-main/`, `addons-test/`, `addons-my/`, `odoo-enterprise/` — Custom and enterprise addons
-- `filestore/` — Persistent Odoo filestore
-- `backup/` — Directory to store the backup from odoo.sh
-- `.env` — Centralized environment variables
+- `docker-compose.yml` — Services and volumes (Odoo, Postgres).
+- `Dockerfile` — Odoo image for dev; minimal utilities; no debugpy.
+- `entrypoint.sh` — Runs Odoo with `-c /etc/odoo/odoo.conf`.
+- `odoo.conf` — Odoo configuration; addons_path mapped to `/mnt/...` and core addons.
+- `enterprise/` — Odoo Enterprise addons (host-cloned; RO mount by default).
+- `addons_main/` — Shared addons (host-cloned; RO mount by default).
+- `addons_test/` — Test addons (host-cloned; RW mount).
+- `addons_my/` — Your personal dev branch (host-cloned; RW mount).
+- `backup/` — Place `dump.sql` and `filestore/` here (from odoo.sh backup).
+- `filestore/` — Live filestore mounted to the container.
+- `.env` — Local env vars (DB, branches). See `.env.example`.
 
-### Prerequisites
+## Prerequisites
 
-- Docker
-- Docker Compose
-- SSH key with access to private repositories (added to your ssh-agent)
-- Visual studio code with extensions: Container Tools, PostgreSQL, Python
+- Docker and Docker Compose
+- Git on host with SSH access to private repos (enterprise/addons)
+- Recommended: VS Code + Docker/Containers, PostgreSQL extensions
 
-### Setup
+## How to use (quick start)
 
-1. **Clone this repository**
-2. **Edit `.env`** as needed for your branches, paths, and credentials
+1. Clone this repo and prepare env
 
-   - You must update ADDONS_MY_BRANCH, set it to your name
-3. **Download and place the database and filestore backup from Odoo.sh:**
+   - Copy `.env.example` to `.env` and adjust as needed:
+      - `DB_NAME`, `DB_USER`, `DB_PASSWORD`
+      - `ADDONS_MY_BRANCH` (defaults to `main` if unset)
 
-   - Go to your Odoo.sh project in the web interface.
-   - Navigate to the **Backups** section.
-   - Download the latest backup (usually a `.zip` file) and unpack it.
-   - Place the database dump (e.g., `dump.sql`) at the path specified by `DB_DUMP_FILE` in your `.env` (e.g., `./backup/dump.sql`).
-   - Place the filestore directory at the path specified by `ODOO_BACKUP_PATH` in your `.env` (e.g., `./backup/filestore`).
+1. Add your data backup
 
-4. **Start the environment and manage code/database:**
+   - Put your odoo.sh backup files in `./backup/`:
+      - SQL dump at `./backup/dump.sql`
+      - Filestore at `./backup/filestore/`
 
-   The Makefile automates all common tasks:
+1. Start services
 
-   ```sh
-   make start
-   ```
+   - Optional: load filestore once
+      - `make filestore`
+   - Start the stack (non-destructive)
+      - `make start`
+   - Access Odoo at <http://localhost:8069>
 
-   This will:
-   - Clone or update all required addons repositories and branches (using git, as defined in `.env`)
-   - Start the Docker containers
-   - Restore the database from a dump if the database is empty
+1. Restore DB (optional on first run)
 
-   To manually restore the database at any time:
+   - If you want to restore from `./backup/dump.sql`:
+      - `make reset-db`
 
-   ```sh
-   make reset-db
-   ```
+## Make targets (summary)
 
-   To reset code to remote repositories:
+- start — Non-destructive. Ensures repos exist/updated (reset-addons) and brings up containers.
+- up — Compose up in background (builds if needed).
+- reset-addons — Clone/update repos on host (enterprise, addons_main, addons_test, addons_my).
+- reset-db — Drop/create DB, restore from `backup/dump.sql`, and run `-u all` once.
+- filestore — Copy `backup/filestore` into `./filestore`.
+- odoo-logs — Tail recent Odoo logs.
+- update-apps-list — Refresh Apps registry (equivalent to UI “Update Apps List”).
+- update-web-modules — Update web, website modules; quick asset refresh.
+- rebuild-assets — Clear ir_attachment/ir_asset via SQL and rebuild web/website.
+- db-shell — psql shell in the db container.
+- odoo-shell — Odoo shell in the app container.
+- url — Print the local URL.
+- nuke — Stop containers and delete repos + db + filestore (DESTRUCTIVE).
+- tidy — Remove stray `.DS_Store` files.
 
-   ```sh
-   make reset-addons
-   ```
+## Configuration notes
 
-## Makefile targets
+- `.env` controls DB credentials and branches. It’s ignored by git and Docker build context. Share `.env.example` for onboarding.
+- `odoo.conf` enables dev mode and logs to stdout. Addons are looked up in:
+   - `/mnt/enterprise`, `/mnt/addons_main`, `/mnt/addons_test/addons`, `/mnt/addons_test/deonet_addons`, `/mnt/addons_my`, plus core addons.
+- We removed `/mnt/extra_addons` to avoid 500 errors on static files when the path doesn’t exist.
+- Ports: Odoo on 8069, Postgres on 5432 (both exposed on localhost).
 
-Common commands you’ll use during development:
+## Common workflows
 
-- make start — Clone/update repos (reset-addons), start containers, restore DB if empty.
-- make reset-addons — Clone repositories if missing, or hard reset each repo to its remote branch as defined in `.env`.
-- make reset-db — Drop, create, and restore the database from `DB_DUMP_FILE`.
-- make filestore — Copy the filestore from `ODOO_BACKUP_PATH/filestore` into `./filestore` (mounted into the container at `/var/lib/odoo`).
-- make up — Start containers in the background.
-- make odoo-logs — Tail recent Odoo logs to troubleshoot.
-- make update-apps-list — Refresh the Apps registry (same as “Update Apps List” in UI).
-- make install-deonet-addons — Install the Deonet test modules (optional helper).
-- make update-web-modules — Update `web` and `website` modules to rebuild website assets.
-
-### Access
-
-- Odoo: <http://localhost:8069>
-- PostgreSQL: Use a VS Code extension (e.g., Microsoft PostgreSQL or SQLTools) to connect to `localhost:5432` with the credentials from your `.env` file.
-
-## Database & Filestore: Getting a Backup from Odoo.sh
-
-Odoo.sh does not provide SSH access. To get a database and filestore backup:
-
-- Go to your Odoo.sh project in the web interface.
-- Navigate to the **Backups** section.
-- Download the latest backup (usually a `.zip` file) and unpack it.
-- Place the database dump (e.g., `dump.sql`) at the path specified by `DB_DUMP_FILE` in your `.env` (e.g., `./backup/dump.sql`).
-- Place the filestore directory at the path specified by `ODOO_BACKUP_PATH` in your `.env` (e.g., `./backup/filestore`).
-- Run `make reset-db` to restore the database in your local environment.
-- Run `make filestore` to restore the filestore in your local environment.
-
-The Makefile will automatically restore the database from this dump if the local database is empty when you run `make start`.
-
-### Notes
-
-- SSH agent forwarding is enabled for secure access to private git repositories during build.
-- All configuration (database, Odoo, branches, paths) is managed via `.env`.
-- Addons and data are mounted as volumes for live development and persistence.
-- The Makefile automates all code updates, repository management, container startup, and database/filestore restoration.
-
-## Customization
-
-- Add or change addon folders as needed (update `.env`, `docker-compose.yml`, and `odoo.conf` accordingly)
-- Adjust Odoo configuration in `odoo.conf`
-- Use different branches for testing or feature development
+- Update code from remotes: `make reset-addons`
+- Rebuild website assets if pages look unstyled:
+   - `make rebuild-assets`, then hard-refresh (Cmd/Ctrl+Shift+R)
+- Update the Apps registry: `make update-apps-list`
+- Logs and shells:
+   - `make odoo-logs`, `make db-shell`, `make odoo-shell`
 
 ## Troubleshooting
 
-- Ensure your SSH agent is running and has the correct keys loaded for private repo access.
-- If you change `.env`, rebuild the containers to apply changes.
+- Static files 500 errors: ensure `odoo.conf` doesn’t reference non-existent addon paths (no `/mnt/extra_addons`).
+- CSS not applying:
+   - `make update-web-modules` or `make rebuild-assets`, then hard-refresh
+   - Check Network tab for `/web/assets/*` → expect HTTP 200
+- Private repos fail to clone: ensure your SSH key is available to git (`ssh-agent` loaded) on the host.
+- Restores: confirm `./backup/dump.sql` exists before running `make reset-db`.
+
+## Debugging
+
+- The image does not include debugpy. Prefer `odoo shell`, logging, or add debugpy temporarily in a feature branch if required.
 
 ## License
 
-This project is for internal development use. Odoo Enterprise and custom modules are subject to their respective licenses.
+Internal development only. Odoo Enterprise and custom modules retain their respective licenses.

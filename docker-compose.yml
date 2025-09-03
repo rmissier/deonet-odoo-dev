@@ -3,13 +3,19 @@ services:
     container_name: odoo-db
     image: postgres:16
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "${ODOO_DB_PORT}:5432"
+      - "5432:5432"
     volumes:
-      - ${ODOO_DB_PATH}:/var/lib/postgresql/data
+      - ./db:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
   odoo:
     container_name: odoo-app
@@ -17,17 +23,20 @@ services:
       context: .
       dockerfile: Dockerfile
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     ports:
-      - "${ODOO_PORT}:8069"
-    environment:
-      HOST: db
-      USER: ${POSTGRES_USER}
-      PASSWORD: ${POSTGRES_PASSWORD}
+      - "8069:8069"
     volumes:
-      - ${ODOO_ENTERPRISE_PATH}:/mnt/enterprise
-      - ${ADDONS_MAIN_PATH}:/mnt/addons-main
-      - ${ADDONS_TEST_PATH}:/mnt/addons-test
-      - ${ADDONS_MY_PATH}:/mnt/addons-my
-      - ${ODOO_FILESTORE_PATH}:/var/lib/odoo
-      - ${ODOO_CONFIG_PATH}:/etc/odoo/odoo.conf
+      - ./enterprise:/mnt/enterprise:ro
+      - ./addons_main:/mnt/addons_main:ro
+      - ./addons_test:/mnt/addons_test
+      - ./addons_my:/mnt/addons_my
+      - ./filestore:/var/lib/odoo
+      - ./odoo.conf:/etc/odoo/odoo.conf
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8069/web/login >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30

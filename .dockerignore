@@ -1,0 +1,25 @@
+# Reduce Docker build context
+.git
+.gitignore
+**/__pycache__/
+**/*.pyc
+
+# Local data and backups
+backup/
+filestore/
+db/
+
+# Repos mounted at runtime
+enterprise/
+addons_main/
+addons_test/
+addons_my/
+
+# OS/files
+.DS_Store
+Thumbs.db
+
+# Local env and IDE
+.env
+.vscode/
+.idea/
