@@ -1,5 +1,5 @@
 
-.PHONY: filestore url start up reset-addons reset-db wait-for-db odoo-logs update-apps-list update-web-modules db-shell odoo-shell nuke rebuild-assets tidy smoke
+.PHONY: filestore url start up reset-addons reset-db wait-for-db odoo-logs update-apps-list update-web-modules db-shell odoo-shell nuke rebuild-assets tidy smoke debug debug-wait debug-off
 
 wait-for-db:
 	@echo "⌛ Waiting for database to be ready..."
@@ -108,6 +108,23 @@ reset-addons:
 
 up:
 	docker compose up -d --build
+
+# Start Odoo with debug adapter active (port 5678)
+debug:
+	@echo "🐞 Starting Odoo in debug mode (port 5678)..."
+	DEBUG=1 docker compose up -d --build odoo
+	@echo "Attach from VS Code using '.vscode/launch.json' → 'Attach to Odoo (debugpy)'."
+
+# Start Odoo in debug mode and wait for debugger to attach before running
+debug-wait:
+	@echo "🐞 Starting Odoo in debug WAIT mode (port 5678)..."
+	DEBUG=1 DEBUG_WAIT=1 docker compose up -d --build odoo
+	@echo "Odoo will wait for debugger to attach before continuing."
+
+# Turn off debug (recreate container without DEBUG)
+debug-off:
+	@echo "🧹 Restarting Odoo without debug..."
+	DEBUG=0 DEBUG_WAIT=0 docker compose up -d --build odoo
 
 
 reset-db: wait-for-db

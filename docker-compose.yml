@@ -27,6 +27,8 @@ services:
         condition: service_healthy
     ports:
       - "8069:8069"
+      # Debug port (only active if DEBUG=1)
+      - "5678:5678"
     volumes:
       - ./enterprise:/mnt/enterprise:ro
       - ./addons_main:/mnt/addons_main:ro
@@ -34,6 +36,10 @@ services:
       - ./addons_my:/mnt/addons_my
       - ./filestore:/var/lib/odoo
       - ./odoo.conf:/etc/odoo/odoo.conf
+    environment:
+      DEBUG: ${DEBUG:-0}
+      DEBUG_WAIT: ${DEBUG_WAIT:-0}
+      DEBUG_PORT: ${DEBUG_PORT:-5678}
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8069/web/login >/dev/null || exit 1"]

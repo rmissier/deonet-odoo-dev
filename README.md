@@ -51,8 +51,13 @@ A reproducible, Docker-based Odoo development setup modeled after odoo.sh. It su
       - `make start`
    - Access Odoo at <http://localhost:8069>
 
-   - Optional: quick smoke test
-      - `make smoke` (expects HTTP 200 for /web/login and frontend assets)
+      - Optional: quick smoke test
+         - `make smoke` (expects HTTP 200 for /web/login and frontend assets)
+
+      - Optional: debug
+         - `make debug` to enable the debug adapter on port 5678 (non-blocking)
+         - Or `make debug-wait` to wait for the debugger to attach before running
+         - In VS Code, run “Attach to Odoo (debugpy)” from the Run and Debug panel
 
 1. Restore DB (optional on first run)
 
@@ -106,6 +111,9 @@ A reproducible, Docker-based Odoo development setup modeled after odoo.sh. It su
    - Check Network tab for `/web/assets/*` → expect HTTP 200
 - Private repos fail to clone: ensure your SSH key is available to git (`ssh-agent` loaded) on the host.
 - Restores: confirm `./backup/dump.sql` exists before running `make reset-db`.
+- Debugging:
+   - If attaching fails, ensure port 5678 is free and the container has DEBUG=1 (use `make debug`).
+   - Set breakpoints in code under: core (`/opt/odoo`), enterprise (`/mnt/enterprise`), addons_main (`/mnt/addons_main`), addons_test (`/mnt/addons_test`), addons_my (`/mnt/addons_my`).
 
 ## Debugging
 

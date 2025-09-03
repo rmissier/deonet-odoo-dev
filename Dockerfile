@@ -4,7 +4,7 @@ USER root
 
 # Install minimal useful utilities; avoid sudo and debugging packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    git ca-certificates ssh-client curl nano \
+    git ca-certificates ssh-client curl nano python3-debugpy \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy entrypoint
