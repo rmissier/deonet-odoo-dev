@@ -1,5 +1,5 @@
 
-.PHONY: filestore url start up reset-addons reset-db wait-for-db odoo-logs update-apps-list db-shell odoo-shell nuke rebuild-assets tidy smoke debug debug-wait debug-off scaffold
+.PHONY: filestore url start up reset-addons reset-db wait-for-db odoo-logs update-apps-list db-shell odoo-shell nuke rebuild-assets tidy smoke debug debug-wait debug-off scaffold install-deps
 
 wait-for-db:
 	@echo "⌛ Waiting for database to be ready..."
@@ -31,7 +31,7 @@ endif
 
 
 # Non-destructive start: update repos, bring up services; DB reset is manual
-start: reset-addons up
+start: reset-addons up install-deps smoke
 
 
 # Remove developer workspace folders and DB/filestore (dangerous - irreversible)
@@ -140,6 +140,15 @@ scaffold:
 	echo "✅ Scaffolded $$dest"; \
 	echo "🔧 Now run: docker compose exec odoo odoo -c /etc/odoo/odoo.conf -d $(DB_NAME) -u $(NAME) --stop-after-init || true";
 
+# Install dependencies using script in addons_my directory
+install-deps:
+	@if [ ! -f "./addons_my/install_dependencies.sh" ]; then \
+		echo "❌ Script ./addons_my/install_dependencies.sh not found!"; \
+		exit 1; \
+	fi
+	@echo "📦 Installing dependencies from addons_my/install_dependencies.sh..."
+	@docker compose exec odoo bash -c "chmod +x /mnt/addons_my/install_dependencies.sh && /mnt/addons_my/install_dependencies.sh"
+	@echo "✅ Dependencies installed successfully"
 
 reset-db: wait-for-db
 	@if [ ! -f "./backup/dump.sql" ]; then \

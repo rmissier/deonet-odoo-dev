@@ -22,7 +22,9 @@
                 "ms-python.vscode-pylance",
                 "samuelcolvin.jinjahtml",
                 "trinhanhngoc.vscode-odoo",
-                "redhat.vscode-xml"
+                "redhat.vscode-xml",
+                "github.copilot",
+                "github.copilot-chat"
             ],
             "settings": {
                 "python.defaultInterpreterPath": "/usr/bin/python3",
