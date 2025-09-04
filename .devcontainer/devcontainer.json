@@ -1,0 +1,39 @@
+{
+    "name": "Odoo Dev (Compose)",
+    "dockerComposeFile": [
+        "../docker-compose.yml"
+    ],
+    "service": "odoo",
+    "workspaceFolder": "/opt/odoo",
+    "runServices": [
+        "db",
+        "odoo"
+    ],
+    "shutdownAction": "stopCompose",
+    "forwardPorts": [
+        8069,
+        5678,
+        5432
+    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "samuelcolvin.jinjahtml",
+                "trinhanhngoc.vscode-odoo",
+                "redhat.vscode-xml"
+            ],
+            "settings": {
+                "python.defaultInterpreterPath": "/usr/bin/python3",
+                "python.analysis.extraPaths": [
+                    "/usr/lib/python3/dist-packages"
+                ],
+                "files.watcherExclude": {
+                    "**/db/**": true,
+                    "**/filestore/**": true
+                }
+            }
+        }
+    }
+}

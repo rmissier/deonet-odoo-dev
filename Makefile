@@ -1,5 +1,5 @@
 
-.PHONY: filestore url start up reset-addons reset-db wait-for-db odoo-logs update-apps-list update-web-modules db-shell odoo-shell nuke rebuild-assets tidy smoke debug debug-wait debug-off
+.PHONY: filestore url start up reset-addons reset-db wait-for-db odoo-logs update-apps-list update-web-modules db-shell odoo-shell nuke rebuild-assets tidy smoke debug debug-wait debug-off scaffold
 
 wait-for-db:
 	@echo "⌛ Waiting for database to be ready..."
@@ -125,6 +125,20 @@ debug-wait:
 debug-off:
 	@echo "🧹 Restarting Odoo without debug..."
 	DEBUG=0 DEBUG_WAIT=0 docker compose up -d --build odoo
+
+# Scaffold a new Odoo module in addons_my (usage: make scaffold NAME=my_module)
+scaffold:
+	@if [ -z "$(NAME)" ]; then echo "Usage: make scaffold NAME=my_module"; exit 2; fi
+	@set -e; dest="./addons_my/$(NAME)"; \
+	if [ -d "$$dest" ]; then echo "❌ Module exists: $$dest"; exit 1; fi; \
+	mkdir -p "$$dest/models" "$$dest/security" "$$dest/views"; \
+	echo "# -*- coding: utf-8 -*-\n{\n    'name': '$(NAME)',\n    'version': '16.0.1.0.0',\n    'depends': ['base'],\n    'data': [\n        'security/ir.model.access.csv',\n        'views/$(NAME)_views.xml'\n    ],\n    'license': 'LGPL-3',\n}" > "$$dest/__manifest__.py"; \
+	echo "# -*- coding: utf-8 -*-\nfrom . import models" > "$$dest/__init__.py"; \
+	echo "# -*- coding: utf-8 -*-\nfrom odoo import models, fields\n\nclass $(NAME:%=%s=)_model(models.Model):\n    _name = '$(NAME).model'\n    name = fields.Char()\n" | sed 's/%s/_/g' > "$$dest/models/__init__.py"; \
+	echo "id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink\naccess_$(NAME)_model,$(NAME) model,model_$(NAME)_model,base.group_user,1,1,1,1" > "$$dest/security/ir.model.access.csv"; \
+	echo "<odoo>\n  <record id=\"view_$(NAME)_model_tree\" model=\"ir.ui.view\">\n    <field name=\"name\">$(NAME).model.tree</field>\n    <field name=\"model\">$(NAME).model</field>\n    <field name=\"arch\" type=\"xml\">\n      <tree>\n        <field name=\"name\"/>\n      </tree>\n    </field>\n  </record>\n</odoo>" > "$$dest/views/$(NAME)_views.xml"; \
+	echo "✅ Scaffolded $$dest"; \
+	echo "🔧 Now run: docker compose exec odoo odoo -c /etc/odoo/odoo.conf -d $(DB_NAME) -u $(NAME) --stop-after-init || true";
 
 
 reset-db: wait-for-db
