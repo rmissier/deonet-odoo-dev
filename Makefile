@@ -1,5 +1,5 @@
 
-.PHONY: filestore url start up reset-addons reset-db wait-for-db odoo-logs update-apps-list update-web-modules db-shell odoo-shell nuke rebuild-assets tidy smoke debug debug-wait debug-off scaffold
+.PHONY: filestore url start up reset-addons reset-db wait-for-db odoo-logs update-apps-list db-shell odoo-shell nuke rebuild-assets tidy smoke debug debug-wait debug-off scaffold
 
 wait-for-db:
 	@echo "⌛ Waiting for database to be ready..."
@@ -178,12 +178,6 @@ update-apps-list: wait-for-db
 	env['ir.module.module'].update_list()
 	print('Apps list updated')
 	PY
-
-# Rebuild/update core web modules to refresh assets if the website looks broken
-update-web-modules: wait-for-db
-	# Update web and website modules; ignore if not installed
-	docker compose exec odoo odoo -c /etc/odoo/odoo.conf -d $(DB_NAME) -u web,website --stop-after-init || true
-
 
 # Print the local Odoo URL for quick access
 url:

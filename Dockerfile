@@ -12,6 +12,11 @@ RUN usermod -aG sudo odoo \
     && echo "odoo ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/odoo \
     && chmod 0440 /etc/sudoers.d/odoo
 
+# Set up SSH directory for odoo user
+RUN mkdir -p /home/odoo/.ssh \
+    && chown odoo:odoo /home/odoo/.ssh \
+    && chmod 700 /home/odoo/.ssh
+
 # Copy entrypoint
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

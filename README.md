@@ -130,7 +130,30 @@ docker compose exec odoo bash
 sudo apt install python3-beautifulsoup4
 ```
 
-Note: System-wide packages persist only while the container is running. For permanent dependencies, add them to the Dockerfile..sh. It supports Enterprise, shared addons, test addons, and a developer branch, all orchestrated with Docker Compose and a single Makefile.
+Note: System-wide packages persist only while the container is running. For permanent dependencies, add them to the Dockerfile.
+
+## Git operations inside container
+
+SSH keys are automatically mounted from your host `~/.ssh` directory, allowing git operations inside the container:
+
+```bash
+# Inside the container (via docker compose exec odoo bash or dev container)
+git config --global user.name "Your Name"
+git config --global user.email "your.email@example.com"
+
+# Now you can use git normally
+cd /mnt/addons_my
+git add .
+git commit -m "Your commit message"
+git push origin your-branch
+```
+
+**Prerequisites:**
+- Ensure your SSH agent is running on the host: `ssh-add -l`
+- Your SSH keys should be in `~/.ssh/` with proper permissions (600 for private keys)
+- Test SSH access from host first: `ssh -T git@github.com`
+
+**Note:** The SSH agent socket is forwarded to the container, so you don't need to enter SSH key passphrases inside the container..sh. It supports Enterprise, shared addons, test addons, and a developer branch, all orchestrated with Docker Compose and a single Makefile.
 
 ## What’s inside
 

@@ -36,10 +36,14 @@ services:
       - ./addons_my:/mnt/addons_my
       - ./filestore:/var/lib/odoo
       - ./odoo.conf:/etc/odoo/odoo.conf
+      # SSH keys for git operations inside container
+      - ~/.ssh:/home/odoo/.ssh:ro
+      - $SSH_AUTH_SOCK:/ssh-agent
     environment:
       DEBUG: ${DEBUG:-0}
       DEBUG_WAIT: ${DEBUG_WAIT:-0}
       DEBUG_PORT: ${DEBUG_PORT:-5678}
+      SSH_AUTH_SOCK: /ssh-agent
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8069/web/login >/dev/null || exit 1"]
