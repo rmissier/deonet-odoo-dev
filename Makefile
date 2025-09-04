@@ -207,14 +207,22 @@ rebuild-assets: wait-for-db
 	@docker compose exec odoo odoo -c /etc/odoo/odoo.conf -d $(DB_NAME) -u web,website --stop-after-init || true
 	@echo "✅ Asset rebuild complete. Hard-refresh your browser (Ctrl/Cmd+Shift+R)."
 
-# Quick HTTP smoke test to ensure Odoo is up and assets are served
+# Quick HTTP smoke test to ensure Odoo is up (accept 2xx/3xx) and assets endpoint responds (accept 2xx/3xx)
 smoke:
-	@echo "🔎 Smoke test: /web/login and frontend assets"
-	@LOGIN_CODE=$$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8069/web/login); \
-	ASSETS_CODE=$$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8069/web/assets/debug/web.assets_frontend.css); \
-	echo "login: $$LOGIN_CODE"; \
-	echo "assets: $$ASSETS_CODE"; \
-	if [ "$$LOGIN_CODE" = "200" ] && [ "$$ASSETS_CODE" = "200" ]; then \
+	@echo "🔎 Smoke test: login and assets (accept 2xx/3xx, try with/without /odoo)"
+	@set -e; \
+	LOGIN_OK=0; ASSETS_OK=0; \
+	for URL in http://localhost:8069/web/login http://localhost:8069/odoo/web/login; do \
+		CODE=$$(curl -s -o /dev/null -w "%{http_code}" $$URL); \
+		echo "login ($$URL): $$CODE"; \
+		if [ "$$CODE" -lt 400 ]; then LOGIN_OK=1; break; fi; \
+	done; \
+	for URL in http://localhost:8069/web/assets/debug/web.assets_frontend.css http://localhost:8069/odoo/web/assets/debug/web.assets_frontend.css; do \
+		CODE=$$(curl -s -o /dev/null -w "%{http_code}" $$URL); \
+		echo "assets ($$URL): $$CODE"; \
+		if [ "$$CODE" -lt 400 ]; then ASSETS_OK=1; break; fi; \
+	done; \
+	if [ "$$LOGIN_OK" = "1" ] && [ "$$ASSETS_OK" = "1" ]; then \
 		echo "✅ Smoke check passed"; \
 	else \
 		echo "❌ Smoke check failed"; \

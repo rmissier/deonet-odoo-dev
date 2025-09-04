@@ -4,6 +4,12 @@ set -euo pipefail
 # entrypoint.sh for Odoo container
 # Always run Odoo with the provided config file
 
+# Fix SSH agent socket permissions if it exists
+if [ -S "${SSH_AUTH_SOCK:-}" ]; then
+  sudo chown root:odoo "$SSH_AUTH_SOCK" 2>/dev/null || true
+  sudo chmod 660 "$SSH_AUTH_SOCK" 2>/dev/null || true
+fi
+
 ODOO_BIN="/usr/bin/odoo"
 ODOO_CONF="/etc/odoo/odoo.conf"
 DEBUG_PORT="${DEBUG_PORT:-5678}"
