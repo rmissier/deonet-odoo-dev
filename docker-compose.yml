@@ -37,7 +37,7 @@ services:
       - ./filestore:/var/lib/odoo
       - ./odoo.conf:/etc/odoo/odoo.conf
       # SSH keys for git operations inside container
-      - ~/.ssh:/home/odoo/.ssh:ro
+      - ~/.ssh:/var/lib/odoo/.ssh:ro
       - $SSH_AUTH_SOCK:/ssh-agent
     environment:
       DEBUG: ${DEBUG:-0}

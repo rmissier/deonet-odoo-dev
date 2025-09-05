@@ -13,9 +13,9 @@ RUN usermod -aG sudo odoo \
     && chmod 0440 /etc/sudoers.d/odoo
 
 # Set up SSH directory for odoo user
-RUN mkdir -p /home/odoo/.ssh \
-    && chown odoo:odoo /home/odoo/.ssh \
-    && chmod 700 /home/odoo/.ssh
+RUN mkdir -p /var/lib/odoo/.ssh \
+    && chown odoo:odoo /var/lib/odoo/.ssh \
+    && chmod 700 /var/lib/odoo/.ssh
 
 # Copy entrypoint
 COPY entrypoint.sh /entrypoint.sh
