@@ -1,11 +1,24 @@
 
-.PHONY: filestore url start up reset-addons reset-db wait-for-db odoo-logs update-apps-list db-shell odoo-shell nuke rebuild-assets tidy smoke debug debug-wait debug-off scaffold install-deps
+.PHONY: filestore url start up reset-addons reset-db wait-for-db wait-for-odoo odoo-logs update-apps-list db-shell odoo-shell nuke rebuild-assets tidy smoke debug debug-wait debug-off scaffold install-deps
 
 wait-for-db:
 	@echo "⌛ Waiting for database to be ready..."
 	@until docker compose exec -T db pg_isready -U $(DB_USER); do \
 		sleep 1; \
 	done
+
+wait-for-odoo:
+	@echo "⌛ Waiting for Odoo HTTP service to be ready..."
+	@set -e; \
+	for i in $$(seq 1 300); do \
+		CODE=$$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8069/web/login); \
+		if [ "$$CODE" -lt 400 ]; then echo "Odoo responded ($$CODE) at /web/login"; exit 0; fi; \
+		CODE=$$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8069/odoo/web/login); \
+		if [ "$$CODE" -lt 400 ]; then echo "Odoo responded ($$CODE) at /odoo/web/login"; exit 0; fi; \
+		sleep 1; \
+	done; \
+	echo "❌ Timeout waiting for Odoo to respond"; \
+	exit 1
 
 # Load DB credentials and developer branch from .env if present
 -include .env
@@ -39,6 +52,8 @@ start: reset-addons up install-deps
 	else \
 		echo "✅ Database $(DB_NAME) is initialized, skipping reset-db"; \
 	fi
+	@echo "⌛ Waiting for Odoo HTTP service..."
+	@$(MAKE) wait-for-odoo
 	@echo "🔍 Running smoke test..."
 	@$(MAKE) smoke
 
@@ -181,6 +196,7 @@ reset-db: wait-for-db
 	@echo "🚀 Starting Odoo service..."
 	@docker compose up -d odoo
 	@$(MAKE) wait-for-db
+	@$(MAKE) wait-for-odoo
 
 
 filestore:
