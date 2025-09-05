@@ -30,13 +30,14 @@ endif
 .DEFAULT_GOAL := start
 
 
-# Smart start: update repos, bring up services, conditionally reset DB if ./db doesn't exist, then smoke test
+# Smart start: update repos, bring up services, conditionally reset DB if not initialized, then smoke test
 start: reset-addons up install-deps
-	@if [ ! -d "./db" ]; then \
-		echo "🔄 Database directory ./db not found, running reset-db..."; \
+	@echo "🔍 Checking if database $(DB_NAME) is initialized..."
+	@if ! docker compose exec -T db psql -U $(DB_USER) -d $(DB_NAME) -c "SELECT 1 FROM ir_module_module LIMIT 1;" >/dev/null 2>&1; then \
+		echo "🔄 Database $(DB_NAME) not initialized or empty, running reset-db..."; \
 		$(MAKE) reset-db; \
 	else \
-		echo "✅ Database directory ./db exists, skipping reset-db"; \
+		echo "✅ Database $(DB_NAME) is initialized, skipping reset-db"; \
 	fi
 	@echo "🔍 Running smoke test..."
 	@$(MAKE) smoke
@@ -59,7 +60,7 @@ tidy:
 # Clone or update all Odoo addon repositories
 reset-addons:
 	@echo "📁 Creating required directories..."
-	mkdir -p ./db ./backup
+	mkdir -p ./backup
 
 	@echo "🔄 Ensuring enterprise repo for baking into image..."
 	@if [ -d "./enterprise/.git" ]; then \
@@ -163,6 +164,7 @@ reset-db: wait-for-db
 		echo "❌ Database dump file ./backup/dump.sql not found!"; \
 		exit 1; \
 		fi
+	mkdir -p ./db
 	@echo "🛑 Stopping Odoo service to free DB connections..."
 	-@docker compose stop odoo || true
 	@echo "🔪 Terminating active connections to $(DB_NAME)..."
@@ -173,10 +175,12 @@ reset-db: wait-for-db
 	@docker compose exec -T db createdb -U $(DB_USER) $(DB_NAME)
 	@echo "📥 Restoring ./backup/dump.sql into $(DB_NAME)..."
 	@cat ./backup/dump.sql | docker compose exec -T db psql -U $(DB_USER) -d $(DB_NAME)
+	$(MAKE) filestore
 	@echo "🔧 Running Odoo upgrade in a one-off container..."
 	@docker compose run --rm --entrypoint /usr/bin/odoo odoo -c /etc/odoo/odoo.conf -d $(DB_NAME) -u all --stop-after-init
 	@echo "🚀 Starting Odoo service..."
 	@docker compose up -d odoo
+	@$(MAKE) wait-for-db
 
 
 filestore:

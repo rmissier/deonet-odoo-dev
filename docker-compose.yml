@@ -34,7 +34,7 @@ services:
       - ./addons_main:/mnt/addons_main:ro
       - ./addons_test:/mnt/addons_test
       - ./addons_my:/mnt/addons_my
-      - ./filestore:/var/lib/odoo
+      - ./filestore:/var/lib/odoo/filestore
       - ./odoo.conf:/etc/odoo/odoo.conf
       # SSH keys for git operations inside container
       - ~/.ssh:/var/lib/odoo/.ssh:ro
