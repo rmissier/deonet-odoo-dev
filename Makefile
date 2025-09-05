@@ -30,8 +30,16 @@ endif
 .DEFAULT_GOAL := start
 
 
-# Non-destructive start: update repos, bring up services; DB reset is manual
-start: reset-addons up install-deps smoke
+# Smart start: update repos, bring up services, conditionally reset DB if ./db doesn't exist, then smoke test
+start: reset-addons up install-deps
+	@if [ ! -d "./db" ]; then \
+		echo "🔄 Database directory ./db not found, running reset-db..."; \
+		$(MAKE) reset-db; \
+	else \
+		echo "✅ Database directory ./db exists, skipping reset-db"; \
+	fi
+	@echo "🔍 Running smoke test..."
+	@$(MAKE) smoke
 
 
 # Remove developer workspace folders and DB/filestore (dangerous - irreversible)

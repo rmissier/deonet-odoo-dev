@@ -6,7 +6,24 @@ A reproducible, Docker-based Odoo development setup mode## Developing modules
 
 ## Common Issues
 
-### **Static files 500 errors**
+### **Static fi3. Start the environment
+    - **One- filestore — Copy `backup/filestore` into `./filestore`.
+- install-deps — Run /mnt/addons_my/install_dependencies.sh script in the container.
+- odoo-logs — Tail recent Odoo logs.
+- update-apps-list — Refresh Apps registry (equivalent to UI "Update Apps List").
+- rebuild-assets — Clear ir_attachment/ir_asset via SQL and rebuild web/website.
+- smoke — Curl /web/login and frontend assets to assert HTTP 200; fails otherwise.nd setup**: `make start`
+        - Updates repositories, builds containers, installs dependencies
+        - **First time**: Automatically restores database if `./db` doesn't exist
+        - **Subsequent runs**: Skips database reset to preserve data
+        - **Always ends with**: Smoke test to verify everything works
+    - Access Odoo at <http://localhost:8069>
+    - Optional: debug
+        - `make debug` to enable the debug adapter on port 5678 (non-blocking)
+        - Or `make debug-wait` to wait for the debugger to attach before running
+        - In VS Code, run "Attach to Odoo (debugpy)" from the Run and Debug panel
+
+**That's it!** The `make start` command handles everything automatically.
 
 - Ensure `odoo.conf` doesn't reference non-existent addon paths (no `/mnt/extra_addons`)
 - Check that all mounted addon directories exist on the host
@@ -213,7 +230,7 @@ git push origin your-branch
 
 ## Make targets (summary)
 
-- start — Non-destructive. Ensures repos exist/updated (reset-addons) and brings up containers.
+- start — Smart setup. Updates repos, brings up containers, installs dependencies. Conditionally runs reset-db if ./db doesn't exist. Always ends with smoke test.
 - up — Compose up in background (builds if needed).
 - reset-addons — Clone/update repos on host (enterprise, addons_main, addons_test, addons_my).
 - reset-db — Drop/create DB, restore from `backup/dump.sql`, and run `-u all` once.
